@@ -1,0 +1,32 @@
+# Build outputs
+**/build/
+**/.gradle/
+*.apk
+*.aab
+*.dex
+
+# Local IDE and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Android local machine configuration
+bed-alarm-android/local.properties
+bed-alarm-android/app/src/debug/res/values/config_private.xml
+
+# Runtime logs and pulled device data
+pressure_logs_from_phone/
+*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Rendered QA artifacts
+docs/rendered_logic_pdf/
+docs/encoding_test.txt
+
+# Sensitive project documents
+*.docx

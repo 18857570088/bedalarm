@@ -1,0 +1,22 @@
+[Unit]
+Description=Bed Alarm Config API
+After=network.target mysql.service
+Wants=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/bedalarm-config-api
+Environment=BEDALARM_DB_HOST=127.0.0.1
+Environment=BEDALARM_DB_PORT=3306
+Environment=BEDALARM_DB_USER=bedalarm
+Environment=BEDALARM_DB_PASSWORD=change-me
+Environment=BEDALARM_DB_NAME=bedalarm
+ExecStart=/opt/sleepwell-api/venv/bin/uvicorn app:app --host 127.0.0.1 --port 18082 --proxy-headers
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bedalarm-config-api
+
+[Install]
+WantedBy=multi-user.target

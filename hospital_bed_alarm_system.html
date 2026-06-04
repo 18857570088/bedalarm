@@ -1,0 +1,308 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .app { padding: 16px; background: var(--color-background-tertiary); min-height: 100vh; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .header h2 { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-card { background: var(--color-background-primary); border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); padding: 8px 12px; text-align: center; }
+  .stat-num { font-size: 20px; font-weight: 500; }
+  .stat-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .beds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+  .bed {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; user-select: none;
+    transition: transform 0.1s;
+    border: 2px solid transparent;
+  }
+  .bed:active { transform: scale(0.96); }
+  .bed-num { font-size: 22px; font-weight: 500; }
+  .bed-status { font-size: 11px; margin-top: 4px; }
+  .bed-badge {
+    position: absolute; top: 6px; right: 8px;
+    font-size: 10px; padding: 2px 6px; border-radius: 10px;
+    font-weight: 500;
+  }
+  .bed-timer { position: absolute; bottom: 6px; font-size: 10px; }
+
+  /* In-bed: comfortable green */
+  .state-in { background: #4caf7d; color: #fff; border-color: #3d9e6a; }
+  .state-in .bed-badge { background: #2e7d52; color: #c8f5df; }
+
+  /* Alerting: flashing red */
+  .state-alert { background: #e53935; color: #fff; border-color: #b71c1c; }
+  .state-alert .bed-badge { background: #7f0000; color: #ffcdd2; }
+  .state-alert .bed-num, .state-alert .bed-status { animation: fadeText 0.8s ease-in-out infinite alternate; }
+
+  /* Acknowledged: comfortable soft rose */
+  .state-ack { background: #f8bbd0; color: #880e4f; border-color: #f48fb1; }
+  .state-ack .bed-badge { background: #fce4ec; color: #880e4f; }
+  .state-ack .bed-num { color: #c62828; }
+
+  /* Long absence: white/light */
+  .state-long { background: #fafafa; color: #757575; border-color: #e0e0e0; }
+  .state-long .bed-badge { background: #eeeeee; color: #616161; }
+
+  @keyframes flashBg {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes fadeText {
+    from { opacity: 1; } to { opacity: 0.6; }
+  }
+  .flashing { animation: flashBg 0.7s ease-in-out infinite; }
+
+  .voice-bar {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--color-text-secondary);
+    min-height: 42px;
+  }
+  .voice-bar .icon { font-size: 18px; color: #e53935; }
+  .voice-text { flex: 1; }
+  .voice-text strong { color: var(--color-text-primary); }
+  .demo-controls { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .demo-btn { font-size: 12px; padding: 6px 12px; border-radius: 6px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-secondary); cursor: pointer; }
+  .demo-btn:hover { background: var(--color-background-tertiary); }
+</style>
+
+<div class="app">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">离床报警监控系统 — 显示所有床位实时状态</h2>
+
+  <div class="header">
+    <h2><i class="ti ti-heart-rate-monitor" aria-hidden="true" style="margin-right:6px;font-size:18px;vertical-align:-2px;color:#e53935"></i>离床报警监控系统</h2>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4caf7d"></div>在床</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e53935"></div>离床报警</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f8bbd0;border:1px solid #f48fb1"></div>已确认离床</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fafafa;border:1px solid #e0e0e0"></div>长时离床(&gt;10分钟)</div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="voice-bar" id="voice-bar">
+    <i class="ti ti-volume-off" aria-hidden="true" style="font-size:18px;"></i>
+    <span class="voice-text">系统正常运行，暂无报警</span>
+  </div>
+
+  <div class="demo-controls">
+    <span style="font-size:12px;color:var(--color-text-secondary);line-height:28px;">演示操作：</span>
+    <button class="demo-btn" onclick="triggerRandom()"><i class="ti ti-bell-ringing" aria-hidden="true"></i> 随机触发离床报警</button>
+    <button class="demo-btn" onclick="resetAll()"><i class="ti ti-refresh" aria-hidden="true"></i> 全部在床</button>
+  </div>
+
+  <div class="beds-grid" id="beds-grid"></div>
+</div>
+
+<script>
+const TOTAL_BEDS = 24;
+const ALERT_VOICE_DURATION = 10000;
+const LONG_ABSENCE_THRESHOLD = 10 * 60 * 1000;
+
+const beds = Array.from({length: TOTAL_BEDS}, (_, i) => ({
+  id: i + 1,
+  state: 'in',
+  absenceStart: null,
+  alertStart: null,
+  acknowledged: false,
+  voiceInterval: null,
+  alertTimeout: null,
+  longTimeout: null,
+}));
+
+let speechSynth = window.speechSynthesis;
+let activeSpeech = null;
+let speakingBedId = null;
+
+function speakAlert(bedId) {
+  if (speechSynth) {
+    speechSynth.cancel();
+    const msg = new SpeechSynthesisUtterance(`${bedId}号床离床，请注意`);
+    msg.lang = 'zh-CN';
+    msg.rate = 0.9;
+    msg.volume = 1;
+    activeSpeech = msg;
+    speakingBedId = bedId;
+    speechSynth.speak(msg);
+  }
+}
+
+function startAlertVoiceLoop(bedId) {
+  const bed = beds[bedId - 1];
+  speakAlert(bedId);
+  bed.voiceInterval = setInterval(() => {
+    const b = beds[bedId - 1];
+    if (b.state === 'alert') speakAlert(bedId);
+    else clearInterval(b.voiceInterval);
+  }, 3000);
+  bed.alertTimeout = setTimeout(() => {
+    stopVoice(bedId);
+  }, ALERT_VOICE_DURATION);
+}
+
+function stopVoice(bedId) {
+  const bed = beds[bedId - 1];
+  clearInterval(bed.voiceInterval);
+  clearTimeout(bed.alertTimeout);
+  if (speakingBedId === bedId && speechSynth) speechSynth.cancel();
+}
+
+function triggerAlert(bedId) {
+  const bed = beds[bedId - 1];
+  if (bed.state !== 'in') return;
+  stopVoice(bedId);
+  clearTimeout(bed.longTimeout);
+  bed.state = 'alert';
+  bed.acknowledged = false;
+  bed.absenceStart = Date.now();
+  bed.alertStart = Date.now();
+  startAlertVoiceLoop(bedId);
+  bed.longTimeout = setTimeout(() => {
+    const b = beds[bedId - 1];
+    if (b.state === 'ack' || b.state === 'alert') {
+      stopVoice(bedId);
+      b.state = 'long';
+      render();
+    }
+  }, LONG_ABSENCE_THRESHOLD);
+  render();
+  updateVoiceBar(bedId);
+}
+
+function acknowledgeAlert(bedId) {
+  const bed = beds[bedId - 1];
+  if (bed.state !== 'alert') return;
+  stopVoice(bedId);
+  bed.state = 'ack';
+  bed.acknowledged = true;
+  render();
+  updateVoiceBarFromActive();
+}
+
+function setBedIn(bedId) {
+  const bed = beds[bedId - 1];
+  stopVoice(bedId);
+  clearTimeout(bed.longTimeout);
+  bed.state = 'in';
+  bed.absenceStart = null;
+  bed.alertStart = null;
+  bed.acknowledged = false;
+  render();
+  updateVoiceBarFromActive();
+}
+
+function updateVoiceBar(bedId) {
+  const bar = document.getElementById('voice-bar');
+  bar.innerHTML = `<i class="ti ti-volume" aria-hidden="true" style="font-size:18px;color:#e53935;animation:fadeText 0.8s infinite alternate;"></i><span class="voice-text"><strong>${bedId}号床离床，请注意</strong> — 语音播报中（10秒）&nbsp;<span style="color:#e53935">点击对应床位方块可取消报警</span></span>`;
+}
+
+function updateVoiceBarFromActive() {
+  const alertBed = beds.find(b => b.state === 'alert');
+  if (alertBed) {
+    updateVoiceBar(alertBed.id);
+  } else {
+    const bar = document.getElementById('voice-bar');
+    bar.innerHTML = `<i class="ti ti-volume-off" aria-hidden="true" style="font-size:18px;"></i><span class="voice-text">系统正常运行，暂无报警</span>`;
+  }
+}
+
+function formatDuration(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  if (m > 0) return `${m}分${s % 60}秒`;
+  return `${s}秒`;
+}
+
+function render() {
+  const grid = document.getElementById('beds-grid');
+  grid.innerHTML = beds.map(bed => {
+    let cls = '';
+    let badge = '';
+    let extra = '';
+    let flashCls = '';
+    const now = Date.now();
+    const elapsed = bed.absenceStart ? now - bed.absenceStart : 0;
+
+    if (bed.state === 'in') {
+      cls = 'state-in';
+      badge = '在床';
+    } else if (bed.state === 'alert') {
+      cls = 'state-alert';
+      badge = '离床!';
+      flashCls = 'flashing';
+      extra = `<span class="bed-timer" style="color:#ffcdd2">${formatDuration(elapsed)}</span>`;
+    } else if (bed.state === 'ack') {
+      cls = 'state-ack';
+      badge = '离床';
+      extra = `<span class="bed-timer" style="color:#ad1457">${formatDuration(elapsed)}</span>`;
+    } else if (bed.state === 'long') {
+      cls = 'state-long';
+      badge = '>10分钟';
+      extra = `<span class="bed-timer" style="color:#bdbdbd">${formatDuration(elapsed)}</span>`;
+    }
+
+    const onclick = bed.state === 'alert'
+      ? `acknowledgeAlert(${bed.id})`
+      : bed.state !== 'in'
+      ? `setBedIn(${bed.id})`
+      : `triggerAlert(${bed.id})`;
+
+    return `<div class="bed ${cls} ${flashCls}" onclick="${onclick}" title="${bed.state === 'in' ? '点击模拟离床' : bed.state === 'alert' ? '点击取消报警' : '点击标记为在床'}">
+      <span class="bed-badge">${badge}</span>
+      <span class="bed-num">${bed.id}</span>
+      <span class="bed-status">${bed.state === 'in' ? '床位' : '离床'}</span>
+      ${extra}
+    </div>`;
+  }).join('');
+
+  const inCount = beds.filter(b => b.state === 'in').length;
+  const alertCount = beds.filter(b => b.state === 'alert').length;
+  const ackCount = beds.filter(b => b.state === 'ack').length;
+  const longCount = beds.filter(b => b.state === 'long').length;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num" style="color:#4caf7d">${inCount}</div><div class="stat-label">在床</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#e53935">${alertCount}</div><div class="stat-label">报警中</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#c2185b">${ackCount}</div><div class="stat-label">已确认离床</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#9e9e9e">${longCount}</div><div class="stat-label">长时离床</div></div>
+  `;
+}
+
+function triggerRandom() {
+  const inBeds = beds.filter(b => b.state === 'in');
+  if (inBeds.length === 0) { alert('当前没有在床患者可触发报警'); return; }
+  const pick = inBeds[Math.floor(Math.random() * inBeds.length)];
+  triggerAlert(pick.id);
+}
+
+function resetAll() {
+  beds.forEach(b => {
+    stopVoice(b.id);
+    clearTimeout(b.longTimeout);
+    b.state = 'in';
+    b.absenceStart = null;
+    b.alertStart = null;
+    b.acknowledged = false;
+  });
+  render();
+  updateVoiceBarFromActive();
+}
+
+setInterval(() => {
+  const hasActive = beds.some(b => b.state !== 'in');
+  if (hasActive) render();
+}, 1000);
+
+render();
+</script>
