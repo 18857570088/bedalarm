@@ -1,0 +1,27 @@
+services:
+  bedalarm-config-api:
+    build:
+      context: .
+    image: bedalarm-config-api:latest
+    container_name: bedalarm-config-api
+    restart: unless-stopped
+    environment:
+      BEDALARM_DB_HOST: ${BEDALARM_DB_HOST:-mysql}
+      BEDALARM_DB_PORT: ${BEDALARM_DB_PORT:-3306}
+      BEDALARM_DB_USER: ${BEDALARM_DB_USER}
+      BEDALARM_DB_PASSWORD: ${BEDALARM_DB_PASSWORD}
+      BEDALARM_DB_NAME: ${BEDALARM_DB_NAME:-bedalarm}
+    expose:
+      - "18082"
+    networks:
+      - gitlab-net
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport urllib.request\nurllib.request.urlopen('http://127.0.0.1:18082/api/health', timeout=5).read()\nPY"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  gitlab-net:
+    external: true

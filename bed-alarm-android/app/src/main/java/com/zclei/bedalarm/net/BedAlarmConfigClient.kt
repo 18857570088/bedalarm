@@ -353,6 +353,6 @@ class BedAlarmConfigClient(
         if (has(name) && !isNull(name)) optString(name).takeIf { it.isNotBlank() } else null
 
     companion object {
-        const val DEFAULT_BASE_URL = "http://152.136.62.157/bedalarm-config/api"
+        const val DEFAULT_BASE_URL = "https://bedalarm.86086.cn/bedalarm-config/api"
     }
 }

@@ -256,6 +256,6 @@ class BedApiClient(
     }
 
     companion object {
-        const val DEFAULT_BASE_URL = "http://86086.cn:5000/api"
+        const val DEFAULT_BASE_URL = "https://api.86086.cn/api"
     }
 }

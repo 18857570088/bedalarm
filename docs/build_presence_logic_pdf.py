@@ -231,7 +231,7 @@ for item in [
 
 story += [
     h1("8. 云端保存与多终端同步"),
-    p("动态参数存储在服务器 152.136.62.157 的 MySQL bedalarm 数据库，表名为 bed_pressure_dynamic_profile。APP 通过 bedalarm-config-api 读取和保存。"),
+    p("动态参数存储在 bedalarm.86086.cn 对应服务器的 MySQL bedalarm 数据库，表名为 bed_pressure_dynamic_profile。APP 通过 bedalarm-config-api 读取和保存。"),
     table(["项目", "当前实现", "说明"], [
         ("读取接口", "GET /bedalarm-config/api/hospitals/{code}/dynamic-pressure-profiles", "APP 启动进入主界面时读取，后台同步也会读取。"),
         ("保存接口", "PUT /bedalarm-config/api/hospitals/{code}/dynamic-pressure-profiles", "每床每天自动更新参数后上传。"),

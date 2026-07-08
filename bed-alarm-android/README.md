@@ -29,13 +29,14 @@
 
 ## 默认配置
 
-- API Base URL：`http://86086.cn:5000/api`（USB 联调默认，绕过当前返回 500 的 nginx `/api` 代理）
+- API Base URL：`https://api.86086.cn/api`
+- BedAlarm Config API：`https://bedalarm.86086.cn/bedalarm-config/api`
 - MQTT Host：`86086.cn`
 - MQTT Port：`1883`
 - MQTT Username：`admin`
 - MQTT Password：配置在 `app/src/main/res/values/config.xml`
 
-API 与 MQTT 配置保存在 `app/src/main/res/values/config.xml`，普通用户登录页不可见、不可修改。登录页只显示用户名与密码。
+API、BedAlarm Config API 与 MQTT 配置保存在 `app/src/main/res/values/config.xml`，普通用户登录页不可见、不可修改。登录页只显示用户名与密码。
 
 ## 构建
 

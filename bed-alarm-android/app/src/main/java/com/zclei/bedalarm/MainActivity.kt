@@ -197,7 +197,10 @@ class MainActivity : ComponentActivity() {
             try {
                 val startup = withContext(Dispatchers.IO) {
                     val hospitals = api.hospitals()
-                    val firstHospital = hospitals.firstOrNull()
+                    val preferredCode = defaultHospitalCode
+                    val firstHospital = hospitals.firstOrNull {
+                        preferredCode.isNotBlank() && it.code.equals(preferredCode, ignoreCase = true)
+                    } ?: hospitals.firstOrNull()
                         ?: error("当前账号没有可见医院")
                     val hospital = api.hospitalByCode(firstHospital.code)
                     val lowWeightSettings = runCatching {
@@ -1745,7 +1748,7 @@ class MainActivity : ComponentActivity() {
                 beds += merged.beds
                 currentHospital = merged.copy(beds = beds.toList())
                 persistLocalLowWeightPatients(hospital.code, beds)
-                val message = "已保存到服务器 152.136.62.157 的 bedalarm 数据库"
+                val message = "已保存到 bedalarm.86086.cn 的 bedalarm 数据库"
                 settingsStatusText?.text = message
                 if (showingSettings) {
                     showSettings(message)
@@ -2121,6 +2124,9 @@ class MainActivity : ComponentActivity() {
 
     private val defaultLoginUsername: String
         get() = getString(R.string.config_default_login_username).trim()
+
+    private val defaultHospitalCode: String
+        get() = getString(R.string.config_default_hospital_code).trim()
 
     companion object {
         private const val DASHBOARD_HORIZONTAL_PADDING_DP = 14

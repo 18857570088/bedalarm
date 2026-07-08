@@ -19,6 +19,9 @@ bed-alarm-android/app/src/debug/res/values/config_private.xml
 # Runtime logs and pulled device data
 pressure_logs_from_phone/
 *.log
+bedalarm_*.png
+bedalarm_window.xml
+window.xml
 
 # Python cache
 __pycache__/
@@ -30,3 +33,4 @@ docs/encoding_test.txt
 
 # Sensitive project documents
 *.docx
+server/bedalarm-serverset.txt

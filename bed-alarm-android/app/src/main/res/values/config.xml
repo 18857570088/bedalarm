@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="config_api_base_url">http://example.com:5000/api</string>
-    <string name="config_bedalarm_config_api_base_url">http://example.com/bedalarm-config/api</string>
-    <string name="config_mqtt_host">example.com</string>
+    <string name="config_api_base_url">https://api.86086.cn/api</string>
+    <string name="config_bedalarm_config_api_base_url">https://bedalarm.86086.cn/bedalarm-config/api</string>
+    <string name="config_mqtt_host">86086.cn</string>
     <integer name="config_mqtt_port">1883</integer>
     <string name="config_mqtt_username"></string>
     <string name="config_mqtt_password"></string>
     <string name="config_default_login_username">admin</string>
+    <string name="config_default_hospital_code">sxqylnk1</string>
 </resources>
